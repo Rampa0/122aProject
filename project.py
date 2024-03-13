@@ -148,13 +148,11 @@ def add_email_to_user(ucid, email):
     try:
         cursor = conn.cursor()
 
-        # Check if the UCINetID exists in the User table
         cursor.execute("SELECT COUNT(*) FROM User WHERE UCINetID = %s", (ucid,))
         if cursor.fetchone()[0] == 0:
             print(f"No user found with UCINetID: {ucid}")
             return False
 
-        # Insert the email into the UserEmail table
         insert_query = "INSERT INTO UserEmail (UCINetID, Email) VALUES (%s, %s)"
         cursor.execute(insert_query, (ucid, email))
         conn.commit()
@@ -166,6 +164,26 @@ def add_email_to_user(ucid, email):
         if conn:
             conn.close()
 
+
+def delete_student(ucid):
+    conn = create_connection()
+    if conn is None:
+        print("Failed to connect to the database.")
+        return False
+
+    try:
+        cursor = conn.cursor()
+        delete_query = "DELETE FROM User WHERE UCINetID = %s"
+        cursor.execute(delete_query, (ucid,))
+        rows_affected = cursor.rowcount
+        conn.commit()
+        return rows_affected > 0
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
 
 def main():
 
@@ -181,6 +199,11 @@ def main():
     # 3 INSERT EMAIL
     elif sys.argv[1] == "addEmail" and len(sys.argv) == 4:
         result = add_email_to_user(sys.argv[2], sys.argv[3])
+        print("Success" if result else "Fail")
+
+    # 4 DELETE STUDENT          THIS ALSO DELETES USER REFERENCES IN USEREMAIL - SHOULD IT?
+    elif len(sys.argv) == 3 and sys.argv[1] == "deleteStudent":
+        result = delete_student(sys.argv[2])
         print("Success" if result else "Fail")
 
     else:
