@@ -64,15 +64,15 @@ def import_csv_data(conn):
     cursor = conn.cursor()
 
     files_to_table = [
+        ["users", "User"],
+        ["emails", "UserEmail"],
+        ["students", "Student"],
         ["admins", "Administrator"],
         ["courses", "Course"],
-        ["emails", "UserEmail"],
-        ["machines", "Machine"],
-        ["manage", "AdministratorManageMachine"],
         ["projects", "Project"],
-        ["students", "Student"],
+        ["machines", "Machine"],
         ["use", "StudentUseMachineInProject"],
-        ["users", "User"]
+        ["manage", "AdministratorManageMachine"]
     ]
 
     for file_to_table in files_to_table:
@@ -81,13 +81,12 @@ def import_csv_data(conn):
             csv_reader = csv.reader(file)
             for row in csv_reader:
                 query = "INSERT INTO " + file_to_table[1] + " VALUES ("
-                data_list = row.split(',')
-                for i in range(len(data_list)):
-                    if i != len(data_list) - 1:
-                        query += data_list[i] + ", "
+                for i in range(len(row)):
+                    if i != len(row) - 1:
+                        query += "\"" + row[i] + "\", "
                     else:
-                        query += data_list[i] + ", "
-                query += ")"
+                        query += "\"" + row[i] + "\""
+                query += ");"
 
                 cursor.execute(query)
         
