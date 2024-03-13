@@ -2,18 +2,22 @@ import database
 import sys
 import csv
 import mysql.connector
+import constants
 
 def create_connection():
     try:
         conn = mysql.connector.connect(
-            host="localhost",
-            user="NoahHensley",
-            password="Redacted",
-            database="schema"
+            host=constants.HOSTNAME,
+            user=constants.USERNAME,
+            password=constants.PASSWORD,
+            database=constants.DATABASE
         )
+
         if conn.is_connected():
             return conn
-    except Error as e:
+        else:
+            print("Connection failed!")
+    except mysql.connector.Error as e:
         print(e)
 
 
@@ -32,12 +36,15 @@ def delete_and_create_tables(conn):
         "AdministratorManageMachine"
     ]
 
-    for table in table_list:
-        query = "DROP TABLE IF EXISTS " + table + " ;"
+    # Going through list reversed to avoid removing
+    # tables that other tables depend on through
+    # foreign keys
+    for table in reversed(table_list):
+        query = "DROP TABLE IF EXISTS " + table + ";"
         cursor.execute(query)
     
     # Create table by running sql file
-    sql_file_path = "schema.sql"
+    sql_file_path = "src/schema.sql"
 
     with open(sql_file_path, 'r') as file:
         sql_script = file.read()
@@ -54,9 +61,29 @@ def delete_and_create_tables(conn):
 
 
 def import_csv_data(conn):
-    # Implement later
+    cursor = conn.cursor()
 
-    pass
+    files_to_table = [
+        ["admins", "Administrator"],
+        ["courses", "Course"],
+        ["emails", "UserEmail"],
+        ["machines", "Machine"],
+        ["manage", "AdministratorManageMachine"],
+        ["projects", "Project"],
+        ["students", "Student"],
+        ["use", "StudentUseMachineInProject"],
+        ["users", "User"]
+    ]
+
+    for file_to_table in files_to_table:
+        file_path = "test_data/" + file_to_table[0] + ".csv"
+        with open(file_path, mode='r') as file:
+            csv_reader = csv.reader(file)
+            
+            # Continue working on later
+        
+    conn.commit()
+    cursor.close()
 
 
 def main():
