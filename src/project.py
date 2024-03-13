@@ -79,8 +79,17 @@ def import_csv_data(conn):
         file_path = "test_data/" + file_to_table[0] + ".csv"
         with open(file_path, mode='r') as file:
             csv_reader = csv.reader(file)
-            
-            # Continue working on later
+            for row in csv_reader:
+                query = "INSERT INTO " + file_to_table[1] + " VALUES ("
+                data_list = row.split(',')
+                for i in range(len(data_list)):
+                    if i != len(data_list) - 1:
+                        query += data_list[i] + ", "
+                    else:
+                        query += data_list[i] + ", "
+                query += ")"
+
+                cursor.execute(query)
         
     conn.commit()
     cursor.close()
