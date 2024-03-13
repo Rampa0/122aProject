@@ -9,7 +9,6 @@ config = {
     'database': 'main',
 }
 
-
 cnx = mysql.connector.connect(user = 'root', password ='password', database='main')
 cursor = cnx.cursor()
 

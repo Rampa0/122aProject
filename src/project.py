@@ -1,66 +1,79 @@
 import database
 import sys
 import csv
+import os
 import mysql.connector
-import constants
+from mysql.connector import Error
+from constants import Constants
+from datetime import datetime
+
 
 def create_connection():
+    conn = None
     try:
         conn = mysql.connector.connect(
-            host=constants.HOSTNAME,
-            user=constants.USERNAME,
-            password=constants.PASSWORD,
-            database=constants.DATABASE
+            host=Constants.HOSTNAME,
+            user=Constants.USERNAME,
+            password=Constants.PASSWORD,
+            database=Constants.DATABASE
         )
-
-        if conn.is_connected():
-            return conn
-        else:
-            print("Connection failed!")
-    except mysql.connector.Error as e:
-        print(e)
+    except Error as e:
+        print(f"Error: {e}")
+    return conn
 
 
+# Function to drop tables if they exist and create new ones
 def delete_and_create_tables(conn):
     cursor = conn.cursor()
-    
+    cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
+    # List of table names to be dropped
     table_list = [
-        "User",
         "UserEmail",
+        "StudentUseMachineInProject",
+        "AdministratorManageMachine",
         "Student",
         "Administrator",
+        "User",
         "Course",
         "Project",
         "Machine",
-        "StudentUseMachineInProject",
-        "AdministratorManageMachine"
     ]
+    for table in table_list:
+        cursor.execute(f"DROP TABLE IF EXISTS {table};")
 
-    # Going through list reversed to avoid removing
-    # tables that other tables depend on through
-    # foreign keys
-    for table in reversed(table_list):
-        query = "DROP TABLE IF EXISTS " + table + ";"
-        cursor.execute(query)
-    
-    # Create table by running sql file
-    sql_file_path = "src/schema.sql"
-
-    with open(sql_file_path, 'r') as file:
+    # Assuming 'schema.sql' is in the same directory as 'project.py'
+    with open('src/schema.sql', 'r') as file:
         sql_script = file.read()
-
-    # Execute each statement in the SQL file
     for statement in sql_script.split(';'):
-        # Ignore empty statements (which can occur due to splitting by ';')
         if statement.strip():
-            print("running: ", statement)
             cursor.execute(statement)
-    
+
+    cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
     conn.commit()
     cursor.close()
 
 
-def import_csv_data(conn):
+def detect_and_format_date(value):
+    # Attempt to detect and convert date strings to 'YYYY-MM-DD'
+    # Considering multiple common date formats for robustness
+    possible_formats = ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y']
+
+    for date_format in possible_formats:
+        try:
+            return datetime.strptime(value, date_format).strftime('%Y-%m-%d')
+        except ValueError:
+            continue  # Try the next format if current one fails
+
+    # Return the original value if it doesn't match any date formats
+    return value
+
+
+def import_csv_data(folder_name):
+    conn = create_connection()
+    if not conn:
+        print("Failed to connect to the database.")
+        return
+
     cursor = conn.cursor()
 
     files_to_table = [
@@ -75,37 +88,73 @@ def import_csv_data(conn):
         ["manage", "AdministratorManageMachine"]
     ]
 
-    for file_to_table in files_to_table:
-        file_path = "test_data/" + file_to_table[0] + ".csv"
+    for file_name, table_name in files_to_table:
+        file_path = os.path.join(folder_name, file_name + ".csv")
         with open(file_path, mode='r') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader:
-                query = "INSERT INTO " + file_to_table[1] + " VALUES ("
-                for i in range(len(row)):
-                    if i != len(row) - 1:
-                        query += "\"" + row[i] + "\", "
-                    else:
-                        query += "\"" + row[i] + "\""
-                query += ");"
+                # Apply date detection and formatting for rows expected to contain dates
+                # Adjust this condition based on the specific tables and columns that contain date values
+                if table_name in ["StudentUseMachineInProject"]:  # Example condition
+                    row = [detect_and_format_date(value) for value in row]  # Corrected usage
 
-                cursor.execute(query)
-        
+                placeholders = ', '.join(['%s'] * len(row))
+                query = f"INSERT INTO {table_name} VALUES ({placeholders});"
+                try:
+                    cursor.execute(query, tuple(row))
+                except mysql.connector.Error as err:
+                    print(f"Error inserting data: {err}")
+                    print(f"Query: {query}")
+                    print(f"Row: {row}")
+
     conn.commit()
     cursor.close()
-
+    conn.close()
 
 def main():
-
-    conn = create_connection()
-
-    if sys.argv[1] == "import" and len(sys.argv) == 3:
-        folder_name = sys.argv[2]
-        delete_and_create_tables(conn)
-        import_csv_data(conn)
-    
+    if len(sys.argv) >= 3 and sys.argv[1] == "import":
+        import_csv_data(sys.argv[2])
     else:
         print("Invalid arguments")
 
 
 if __name__ == '__main__':
     main()
+
+
+
+
+
+#
+# def import_csv_data(conn):
+#     cursor = conn.cursor()
+#
+#     files_to_table = [
+#         ["users", "User"],
+#         ["emails", "UserEmail"],
+#         ["students", "Student"],
+#         ["admins", "Administrator"],
+#         ["courses", "Course"],
+#         ["projects", "Project"],
+#         ["machines", "Machine"],
+#         ["use", "StudentUseMachineInProject"],
+#         ["manage", "AdministratorManageMachine"]
+#     ]
+#
+#     for file_to_table in files_to_table:
+#         file_path = "test_data/" + file_to_table[0] + ".csv"
+#         with open(file_path, mode='r') as file:
+#             csv_reader = csv.reader(file)
+#             # Skip the header if your CSV has one
+#             next(csv_reader, None)
+#             for row in csv_reader:
+#                 # Attempt to format date strings in the row
+#                 formatted_row = [try_format_date(value) for value in row]
+#
+#                 placeholders = ', '.join(['%s' for _ in formatted_row])
+#                 query = f"INSERT INTO {file_to_table[1]} VALUES ({placeholders});"
+#                 cursor.execute(query, tuple(formatted_row))
+#
+#     conn.commit()
+#     cursor.close()
+#
