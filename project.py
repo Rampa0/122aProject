@@ -232,6 +232,29 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
             conn.close()
 
 
+def update_course(course_id, title):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # Check if the course exists
+        cursor.execute("SELECT title FROM Course WHERE course_id = %s", (course_id,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No course found with course_id {course_id}")
+            return False
+        update_query = "UPDATE Course SET title = %s WHERE course_id = %s"
+        cursor.execute(update_query, (title, course_id))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
 def main():
 
     # 1 IMPORT
@@ -255,6 +278,11 @@ def main():
 
     # 6 Insert use record
     elif sys.argv[1] == "insertUse" and len(sys.argv) == 7:
+        result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+        print("Success" if result else "Fail")
+
+    # 7 Update course
+    elif sys.argv[1] == "updateCourse" and len(sys.argv) == 4:
         result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
 
