@@ -55,11 +55,11 @@ CREATE TABLE Machine (
 
 -- Use Relationship
 CREATE TABLE StudentUseMachineInProject (
+    project_id INT,
+    UCINetID VARCHAR(255),
+    machine_id INT,
     start_date DATE,
     end_date DATE,
-    UCINetID VARCHAR(255),
-    project_id INT,
-    machine_id INT,
     PRIMARY KEY (UCINetID, project_id, machine_id),
     FOREIGN KEY (UCINetID) REFERENCES Student(UCINetID),
     FOREIGN KEY (project_id) REFERENCES Project(project_id),
@@ -69,9 +69,9 @@ CREATE TABLE StudentUseMachineInProject (
 
 -- Manage (Machine-Administrator Relationship) Table
 CREATE TABLE AdministratorManageMachine  (
-    machine_id INT,
     UCINetID VARCHAR(255),
-    PRIMARY KEY (machine_id, UCINetID),
-    FOREIGN KEY (machine_id) REFERENCES Machine(machine_id),
-    FOREIGN KEY (UCINetID) REFERENCES Administrator(UCINetID)
+    machine_id INT,
+    PRIMARY KEY (UCINetID, machine_id),
+    FOREIGN KEY (UCINetID) REFERENCES Administrator(UCINetID),
+    FOREIGN KEY (machine_id) REFERENCES Machine(machine_id)
 );

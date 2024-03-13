@@ -40,13 +40,15 @@ def delete_and_create_tables(conn):
     ]
     for table in table_list:
         cursor.execute(f"DROP TABLE IF EXISTS {table};")
-
+        print(f'dropping table {table}')
+    print('-----')
     # Assuming 'schema.sql' is in the same directory as 'project.py'
     with open('src/schema.sql', 'r') as file:
         sql_script = file.read()
     for statement in sql_script.split(';'):
         if statement.strip():
             cursor.execute(statement)
+            print(f'adding {statement}')
 
     cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
     conn.commit()
@@ -54,17 +56,13 @@ def delete_and_create_tables(conn):
 
 
 def detect_and_format_date(value):
-    # Attempt to detect and convert date strings to 'YYYY-MM-DD'
-    # Considering multiple common date formats for robustness
     possible_formats = ['%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y']
 
     for date_format in possible_formats:
         try:
             return datetime.strptime(value, date_format).strftime('%Y-%m-%d')
         except ValueError:
-            continue  # Try the next format if current one fails
-
-    # Return the original value if it doesn't match any date formats
+            continue
     return value
 
 
@@ -74,6 +72,7 @@ def import_csv_data(folder_name):
         print("Failed to connect to the database.")
         return
 
+    delete_and_create_tables(conn)
     cursor = conn.cursor()
 
     files_to_table = [
@@ -93,10 +92,8 @@ def import_csv_data(folder_name):
         with open(file_path, mode='r') as file:
             csv_reader = csv.reader(file)
             for row in csv_reader:
-                # Apply date detection and formatting for rows expected to contain dates
-                # Adjust this condition based on the specific tables and columns that contain date values
-                if table_name in ["StudentUseMachineInProject"]:  # Example condition
-                    row = [detect_and_format_date(value) for value in row]  # Corrected usage
+                if table_name in ["StudentUseMachineInProject"]:
+                    row = [detect_and_format_date(value) for value in row]
 
                 placeholders = ', '.join(['%s'] * len(row))
                 query = f"INSERT INTO {table_name} VALUES ({placeholders});"
@@ -121,40 +118,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-
-
-
-#
-# def import_csv_data(conn):
-#     cursor = conn.cursor()
-#
-#     files_to_table = [
-#         ["users", "User"],
-#         ["emails", "UserEmail"],
-#         ["students", "Student"],
-#         ["admins", "Administrator"],
-#         ["courses", "Course"],
-#         ["projects", "Project"],
-#         ["machines", "Machine"],
-#         ["use", "StudentUseMachineInProject"],
-#         ["manage", "AdministratorManageMachine"]
-#     ]
-#
-#     for file_to_table in files_to_table:
-#         file_path = "test_data/" + file_to_table[0] + ".csv"
-#         with open(file_path, mode='r') as file:
-#             csv_reader = csv.reader(file)
-#             # Skip the header if your CSV has one
-#             next(csv_reader, None)
-#             for row in csv_reader:
-#                 # Attempt to format date strings in the row
-#                 formatted_row = [try_format_date(value) for value in row]
-#
-#                 placeholders = ', '.join(['%s' for _ in formatted_row])
-#                 query = f"INSERT INTO {file_to_table[1]} VALUES ({placeholders});"
-#                 cursor.execute(query, tuple(formatted_row))
-#
-#     conn.commit()
-#     cursor.close()
-#
