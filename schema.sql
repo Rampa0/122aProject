@@ -5,6 +5,7 @@ CREATE TABLE User (
     name_middle VARCHAR(255),
     name_last VARCHAR(255)
 );
+
 CREATE TABLE UserEmail (
   UCINetID VARCHAR(20) NOT NULL,
   Email VARCHAR(255),
@@ -12,7 +13,6 @@ CREATE TABLE UserEmail (
   FOREIGN KEY (UCINetID) REFERENCES User(UCINetID)
         ON DELETE CASCADE
 );
-
 
 -- Student Table
 CREATE TABLE Student (
@@ -65,7 +65,6 @@ CREATE TABLE StudentUseMachineInProject (
     FOREIGN KEY (project_id) REFERENCES Project(project_id),
     FOREIGN KEY (machine_id) REFERENCES Machine(machine_id)
 );
-
 
 -- Manage (Machine-Administrator Relationship) Table
 CREATE TABLE AdministratorManageMachine  (

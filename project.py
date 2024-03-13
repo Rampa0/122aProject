@@ -42,7 +42,7 @@ def delete_and_create_tables(conn):
         cursor.execute(f"DROP TABLE IF EXISTS {table};")
         print(f'dropping table {table}')
     print('-----')
-    # Assuming 'schema.sql' is in the same directory as 'project.py'
+    # Assuming 'schema.sql' is in the same directory as 'project.py' --later on we might need to rearange all of the fils into different directory
     with open('schema.sql', 'r') as file:
         sql_script = file.read()
     for statement in sql_script.split(';'):
@@ -108,11 +108,53 @@ def import_csv_data(folder_name):
     cursor.close()
     conn.close()
 
+
+def insert_student(ucid, email, first, middle, last):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+
+        user_insert_query = """
+        INSERT INTO User (UCINetID, name_first, name_middle, name_last)
+        VALUES (%s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE UCINetID=UCINetID;
+        """
+        middle_value = None if middle.upper() == "NULL" else middle
+        user_data = (ucid, first, middle_value, last)
+        cursor.execute(user_insert_query, user_data)
+
+        student_insert_query = "INSERT INTO Student (UCINetID) VALUES (%s)"
+        cursor.execute(student_insert_query, (ucid,))
+
+        email_insert_query = "INSERT INTO UserEmail (UCINetID, Email) VALUES (%s, %s)"
+        cursor.execute(email_insert_query, (ucid, email,))
+
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+
 def main():
-    if len(sys.argv) >= 3 and sys.argv[1] == "import":
+
+    # 1 IMPORT
+    if sys.argv[1] == "import" and len(sys.argv) == 3:
         import_csv_data(sys.argv[2])
+
+    # 2 INSERT
+    elif sys.argv[1] == "insertStudent" and len(sys.argv) == 7:
+        result = insert_student(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+        print("Success" if result else "Fail")
+
     else:
         print("Invalid arguments")
+
+
 
 
 if __name__ == '__main__':
