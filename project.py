@@ -139,6 +139,33 @@ def insert_student(ucid, email, first, middle, last):
             conn.close()
 
 
+def add_email_to_user(ucid, email):
+    conn = create_connection()
+    if conn is None:
+        print("Failed to connect to the database.")
+        return False
+
+    try:
+        cursor = conn.cursor()
+
+        # Check if the UCINetID exists in the User table
+        cursor.execute("SELECT COUNT(*) FROM User WHERE UCINetID = %s", (ucid,))
+        if cursor.fetchone()[0] == 0:
+            print(f"No user found with UCINetID: {ucid}")
+            return False
+
+        # Insert the email into the UserEmail table
+        insert_query = "INSERT INTO UserEmail (UCINetID, Email) VALUES (%s, %s)"
+        cursor.execute(insert_query, (ucid, email))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
 
 def main():
 
@@ -146,9 +173,14 @@ def main():
     if sys.argv[1] == "import" and len(sys.argv) == 3:
         import_csv_data(sys.argv[2])
 
-    # 2 INSERT
+    # 2 INSERT STUDENT
     elif sys.argv[1] == "insertStudent" and len(sys.argv) == 7:
         result = insert_student(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+        print("Success" if result else "Fail")
+
+    # 3 INSERT EMAIL
+    elif sys.argv[1] == "addEmail" and len(sys.argv) == 4:
+        result = add_email_to_user(sys.argv[2], sys.argv[3])
         print("Success" if result else "Fail")
 
     else:
