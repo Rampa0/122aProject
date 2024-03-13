@@ -203,6 +203,14 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         VALUES (%s, %s, %s, %s, %s)
         """
         cursor.execute(insert_query, (proj_id, ucinetid, machine_id, start_date, end_date))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
 
 
 def main():
