@@ -185,6 +185,53 @@ def delete_student(ucid):
         if conn:
             conn.close()
 
+
+def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+
+        # Check if the student exists
+        cursor.execute("SELECT UCINetID FROM Student WHERE UCINetID = %s", (ucinetid,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No student found with UCINetID {ucinetid}")
+            return False
+
+        # Check if the project exists
+        cursor.execute("SELECT project_id FROM Project WHERE project_id = %s", (proj_id,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No project found with project_id {proj_id}")
+            return False
+
+        # Check if the machine exists
+        cursor.execute("SELECT machine_id FROM Machines WHERE machine_id = %s", (machine_id,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No machine found with machine_id {machine_id}")
+            return False
+
+
+        # If the student exists, insert the use record
+        insert_query = """
+        INSERT INTO StudentUseMachineInProject (project_id, UCINetID, machine_id, start_date, end_date)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (proj_id, ucinetid, machine_id, start_date, end_date))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
 def main():
 
     # 1 IMPORT
@@ -204,6 +251,11 @@ def main():
     # 4 DELETE STUDENT          THIS ALSO DELETES USER REFERENCES IN USEREMAIL - SHOULD IT?
     elif len(sys.argv) == 3 and sys.argv[1] == "deleteStudent":
         result = delete_student(sys.argv[2])
+        print("Success" if result else "Fail")
+
+    # 6 Insert use record
+    elif sys.argv[1] == "insertUse" and len(sys.argv) == 7:
+        result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
 
     else:
