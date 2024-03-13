@@ -229,6 +229,11 @@ def main():
         result = add_email_to_user(sys.argv[2], sys.argv[3])
         print("Success" if result else "Fail")
 
+    # 6
+    elif sys.argv[1] == "insertUse" and len(sys.argv) == 7:
+        result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+        print("Success" if result else "Fail")
+
     else:
         print("Invalid arguments")
 
