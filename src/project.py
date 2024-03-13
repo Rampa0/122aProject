@@ -43,7 +43,7 @@ def delete_and_create_tables(conn):
         print(f'dropping table {table}')
     print('-----')
     # Assuming 'schema.sql' is in the same directory as 'project.py'
-    with open('src/schema.sql', 'r') as file:
+    with open('schema.sql', 'r') as file:
         sql_script = file.read()
     for statement in sql_script.split(';'):
         if statement.strip():
