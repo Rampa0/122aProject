@@ -257,6 +257,11 @@ def main():
         result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
 
+    # 7 Update course
+    elif sys.argv[1] == "updateCourse" and len(sys.argv) == 4:
+        result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+        print("Success" if result else "Fail")
+
     else:
         print("Invalid arguments")
 
