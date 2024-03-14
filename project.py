@@ -236,6 +236,39 @@ def update_course(course_id, title):
             conn.close()
 
 
+def list_course(ucinetid):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # Check if the student exists
+        cursor.execute("SELECT UCINetID FROM Student WHERE UCINetID = %s", (ucinetid,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No student found with UCINetID {ucinetid}")
+            return False
+
+        select_query = """
+        SELECT Course.course_id, Course.title, Course.quarter
+        FROM Course
+        JOIN Project ON Course.course_id = Project.course_id
+        JOIN StudentUseMachineInProject ON Project.project_id = StudentUseMachineInProject.project_id
+        WHERE StudentUseMachineInProject.UCINetID = %s
+        ORDER BY Course.course_id ASC
+        """
+        cursor.execute(select_query, (ucinetid,))
+        rows = cursor.fetchall()
+        for row in rows:
+            print(row)
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
 def main():
 
     # 1 IMPORT
@@ -259,7 +292,12 @@ def main():
 
     # 7 Update course
     elif sys.argv[1] == "updateCourse" and len(sys.argv) == 4:
-        result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+        result = update_course(sys.argv[2], sys.argv[3])
+        print("Success" if result else "Fail")
+
+    # 8 Course attended
+    elif sys.argv[1] == "listCourse" and len(sys.argv) == 3:
+        result = list_course(sys.argv[2])
         print("Success" if result else "Fail")
 
     else:
