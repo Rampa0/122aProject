@@ -170,8 +170,6 @@ def add_email_to_user(ucid, email):
 def delete_student(ucid):
     conn = create_connection()
     if conn is None:
-        return False
-    if conn is None:
         print("Failed to connect to the database.")
         return False
 
