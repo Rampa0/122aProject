@@ -317,7 +317,7 @@ def list_popular_course(n):
         cursor.execute(select_query, (n, ))
         rows = cursor.fetchall()
         for row in rows:
-            print(f"CourseId: {row[0]}, title: {row[1]}, studentCount: {row[2]}")
+            print(','.join(map(str, row)))
         return True
     except Error as e:
         return False
