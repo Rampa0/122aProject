@@ -309,43 +309,50 @@ def list_course(ucinetid):
 
 
 def main():
+    function_name = sys.argv[1]
+    args = sys.argv[2:]
 
     # 1 IMPORT
-    if sys.argv[1] == "import" and len(sys.argv) == 3:
+    if function_name == "import" and len(args) == 2:
         import_csv_data(sys.argv[2])
 
     # 2 INSERT STUDENT
-    elif sys.argv[1] == "insertStudent" and len(sys.argv) == 7:
+    elif function_name == "insertStudent" and len(args) == 6:
         result = insert_student(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
 
     # 3 INSERT EMAIL
-    elif sys.argv[1] == "addEmail" and len(sys.argv) == 4:
+    elif function_name == "addEmail" and len(args) == 3:
         result = add_email_to_user(sys.argv[2], sys.argv[3])
         print("Success" if result else "Fail")
 
     # 4 DELETE STUDENT          THIS ALSO DELETES USER REFERENCES IN USEREMAIL - SHOULD IT?
-    elif len(sys.argv) == 3 and sys.argv[1] == "deleteStudent":
+    elif len(args) == 2 and function_name == "deleteStudent":
         result = delete_student(sys.argv[2])
         print("Success" if result else "Fail")
 
     # 5 INSERT MACHINE
-    elif sys.argv[1] == "insertMachine" and len(sys.argv) == 7:
-        result = insert_machine(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
+    elif function_name == "insertMachine" and len(args) == 6:
+        machine_id = int(sys.argv[2])
+        hostname = sys.argv[3]
+        ip_addr = sys.argv[4]
+        status = sys.argv[5]
+        location = sys.argv[6]
+        result = insert_machine(machine_id, hostname, ip_addr, status, location)
         print("Success" if result else "Fail")
 
     # 6 Insert use record
-    elif sys.argv[1] == "insertUse" and len(sys.argv) == 7:
+    elif function_name == "insertUse" and len(args) == 6:
         result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
 
     # 7 Update course
-    elif sys.argv[1] == "updateCourse" and len(sys.argv) == 4:
+    elif function_name == "updateCourse" and len(args) == 3:
         result = update_course(sys.argv[2], sys.argv[3])
         print("Success" if result else "Fail")
 
     # 8 Course attended
-    elif sys.argv[1] == "listCourse" and len(sys.argv) == 3:
+    elif function_name == "listCourse" and len(args) == 2:
         result = list_course(sys.argv[2])
         print("Success" if result else "Fail")
 
