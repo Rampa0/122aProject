@@ -186,6 +186,26 @@ def delete_student(ucid):
             conn.close()
 
 
+def insert_machine(machine_id, hostname, ip_addr, status, location):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        insert_query = """
+        INSERT INTO Machine (machine_id, hostname, IP_address, operational_status, location)
+        VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (machine_id, hostname, ip_addr, status, location))
+        conn.commit()
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+
 def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
     conn = create_connection()
     try:
@@ -307,6 +327,11 @@ def main():
     # 4 DELETE STUDENT          THIS ALSO DELETES USER REFERENCES IN USEREMAIL - SHOULD IT?
     elif len(sys.argv) == 3 and sys.argv[1] == "deleteStudent":
         result = delete_student(sys.argv[2])
+        print("Success" if result else "Fail")
+
+    # 5 INSERT MACHINE
+    elif sys.argv[1] == "insertMachine" and len(sys.argv) == 7:
+        result = insert_machine(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
 
     # 6 Insert use record
