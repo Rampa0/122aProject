@@ -299,7 +299,7 @@ def list_course_attended(ucinetid):
             conn.close()
 
 
-def list_popular_course(N):
+def list_popular_course(n):
     conn = create_connection()
     try:
         cursor = conn.cursor()
@@ -314,13 +314,12 @@ def list_popular_course(N):
         ORDER BY studentCount DESC, Course.course_id DESC
         LIMIT %s;
         """
-        cursor.execute(select_query, (N, ))
+        cursor.execute(select_query, (n, ))
         rows = cursor.fetchall()
         for row in rows:
             print(f"CourseId: {row[0]}, title: {row[1]}, studentCount: {row[2]}")
         return True
     except Error as e:
-        print(e)
         return False
     finally:
         if conn:
