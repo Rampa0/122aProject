@@ -15,7 +15,7 @@ def create_connection():
             host=Constants.HOSTNAME,
             user=Constants.USERNAME,
             password=Constants.PASSWORD,
-            database=Constants.DATABASE
+            database=Constants.DATABAS
         )
     except Error as e:
         print(f"Error: {e}")
@@ -308,6 +308,39 @@ def list_course(ucinetid):
             conn.close()
 
 
+def adminEmails(machine_id):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # Check if the student exists
+        cursor.execute("SELECT machine_id FROM Machine WHERE machine_id = %s", (machine_id,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No machine found with machine_id {machine_id}")
+            return False
+
+        select_query = """
+        SELECT e.email
+        FROM Administrator AS a
+        JOIN UserEmail e ON a.UCINetId = e.UCINetId
+        JOIN AdministratorManageMachine amm ON amm.UCINetId = a.UCINetId
+        WHERE amm.machine_id = %s
+        ORDER BY a.UCINetID ASC;
+        """
+        cursor.execute(select_query, (machine_id,))
+        rows = cursor.fetchall()
+        for row in rows:
+            print(','.join(map(str, row)))
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
 def activeStudent(machineid, n, start, end):
     conn = create_connection()
     try:
@@ -414,6 +447,11 @@ def main():
     # 8 Course attended
     elif sys.argv[1] == "listCourse" and len(sys.argv) == 3:
         result = list_course(sys.argv[2])
+        print("Success" if result else "Fail")
+
+    # 10 Email of admins
+    elif sys.argv[1] == 'adminEmails' and len(sys.argv) == 3:
+        result = adminEmails(sys.argv[2])
         print("Success" if result else "Fail")
 
     # 11 Active students
