@@ -198,7 +198,6 @@ def insert_machine(machine_id, hostname, ip_addr, status, location):
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -216,7 +215,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No student found with UCINetID {ucinetid}")
             return False
 
         # Check if the project exists
@@ -224,7 +222,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No project found with project_id {proj_id}")
             return False
 
         # Check if the machine exists
@@ -232,7 +229,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No machine found with machine_id {machine_id}")
             return False
 
 
@@ -245,7 +241,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -261,14 +256,12 @@ def update_course(course_id, title):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No course found with course_id {course_id}")
             return False
         update_query = "UPDATE Course SET title = %s WHERE course_id = %s"
         cursor.execute(update_query, (title, course_id))
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -284,7 +277,6 @@ def list_course(ucinetid):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No student found with UCINetID {ucinetid}")
             return False
 
         select_query = """
@@ -301,7 +293,6 @@ def list_course(ucinetid):
             print(','.join(map(str, row)))
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
