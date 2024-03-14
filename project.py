@@ -111,6 +111,8 @@ def import_csv_data(folder_name):
 
 def insert_student(ucid, email, first, middle, last):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
 
@@ -168,6 +170,8 @@ def add_email_to_user(ucid, email):
 def delete_student(ucid):
     conn = create_connection()
     if conn is None:
+        return False
+    if conn is None:
         print("Failed to connect to the database.")
         return False
 
@@ -188,6 +192,8 @@ def delete_student(ucid):
 
 def insert_machine(machine_id, hostname, ip_addr, status, location):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
         insert_query = """
@@ -207,6 +213,8 @@ def insert_machine(machine_id, hostname, ip_addr, status, location):
 
 def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
 
@@ -249,6 +257,8 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
 
 def update_course(course_id, title):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
         # Check if the course exists
@@ -270,6 +280,8 @@ def update_course(course_id, title):
 
 def list_course_attended(ucinetid):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
         # Check if the student exists
@@ -301,6 +313,8 @@ def list_course_attended(ucinetid):
 
 def list_popular_course(n):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
 
@@ -328,6 +342,8 @@ def list_popular_course(n):
 
 def adminEmails(machine_id):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
         # Check if the student exists
@@ -361,6 +377,8 @@ def adminEmails(machine_id):
 
 def activeStudent(machineid, n, start, end):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
         # Check if the student exists
@@ -394,6 +412,8 @@ def activeStudent(machineid, n, start, end):
 
 def machineUsage(courseid):
     conn = create_connection()
+    if conn is None:
+        return False
     try:
         cursor = conn.cursor()
         # Check if the student exists
