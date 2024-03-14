@@ -300,7 +300,6 @@ def list_course_attended(ucinetid):
 
 
 def list_popular_course(N):
-    print(type(N))
     conn = create_connection()
     try:
         cursor = conn.cursor()
