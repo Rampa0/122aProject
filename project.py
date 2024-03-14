@@ -15,7 +15,7 @@ def create_connection():
             host=Constants.HOSTNAME,
             user=Constants.USERNAME,
             password=Constants.PASSWORD,
-            database=Constants.DATABAS
+            database=Constants.DATABASE
         )
     except Error as e:
         print(f"Error: {e}")
@@ -198,7 +198,6 @@ def insert_machine(machine_id, hostname, ip_addr, status, location):
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -216,7 +215,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No student found with UCINetID {ucinetid}")
             return False
 
         # Check if the project exists
@@ -224,7 +222,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No project found with project_id {proj_id}")
             return False
 
         # Check if the machine exists
@@ -232,7 +229,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No machine found with machine_id {machine_id}")
             return False
 
 
@@ -245,7 +241,6 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -261,21 +256,19 @@ def update_course(course_id, title):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No course found with course_id {course_id}")
             return False
         update_query = "UPDATE Course SET title = %s WHERE course_id = %s"
         cursor.execute(update_query, (title, course_id))
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
             conn.close()
 
 
-def list_course(ucinetid):
+def list_course_attended(ucinetid):
     conn = create_connection()
     try:
         cursor = conn.cursor()
@@ -284,7 +277,6 @@ def list_course(ucinetid):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No student found with UCINetID {ucinetid}")
             return False
 
         select_query = """
@@ -301,7 +293,35 @@ def list_course(ucinetid):
             print(','.join(map(str, row)))
         return True
     except Error as e:
-        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+def list_popular_course(N):
+    print(type(N))
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+
+        select_query = """
+        SELECT Course.course_id, Course.title, COUNT(Student.UCINetID) AS studentCount
+        FROM Course
+        JOIN Project ON Course.course_id = Project.course_id
+        JOIN StudentUseMachineInProject ON Project.project_id = StudentUseMachineInProject.project_id
+        JOIN Student ON StudentUseMachineInProject.UCINetID = Student.UCINetID
+        GROUP BY Course.course_id, Course.title
+        ORDER BY studentCount DESC, Course.course_id DESC
+        LIMIT %s;
+        """
+        cursor.execute(select_query, (N, ))
+        rows = cursor.fetchall()
+        for row in rows:
+            print(f"CourseId: {row[0]}, title: {row[1]}, studentCount: {row[2]}")
+        return True
+    except Error as e:
+        print(e)
         return False
     finally:
         if conn:
@@ -446,7 +466,12 @@ def main():
 
     # 8 Course attended
     elif sys.argv[1] == "listCourse" and len(sys.argv) == 3:
-        result = list_course(sys.argv[2])
+        result = list_course_attended(sys.argv[2])
+        print("Success" if result else "Fail")
+
+    # 9 Popular course
+    elif sys.argv[1] == 'popularCourse' and len(sys.argv) == 3:
+        result = list_popular_course(int(sys.argv[2]))
         print("Success" if result else "Fail")
 
     # 10 Email of admins
