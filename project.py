@@ -198,6 +198,7 @@ def insert_machine(machine_id, hostname, ip_addr, status, location):
         conn.commit()
         return True
     except Error as e:
+        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -215,6 +216,7 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
+            print(f"Error: No student found with UCINetID {ucinetid}")
             return False
 
         # Check if the project exists
@@ -222,6 +224,7 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
+            print(f"Error: No project found with project_id {proj_id}")
             return False
 
         # Check if the machine exists
@@ -229,6 +232,7 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         result = cursor.fetchone()
 
         if result is None:
+            print(f"Error: No machine found with machine_id {machine_id}")
             return False
 
 
@@ -241,6 +245,7 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
         conn.commit()
         return True
     except Error as e:
+        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -256,12 +261,14 @@ def update_course(course_id, title):
         result = cursor.fetchone()
 
         if result is None:
+            print(f"Error: No course found with course_id {course_id}")
             return False
         update_query = "UPDATE Course SET title = %s WHERE course_id = %s"
         cursor.execute(update_query, (title, course_id))
         conn.commit()
         return True
     except Error as e:
+        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -277,6 +284,7 @@ def list_course(ucinetid):
         result = cursor.fetchone()
 
         if result is None:
+            print(f"Error: No student found with UCINetID {ucinetid}")
             return False
 
         select_query = """
@@ -293,6 +301,74 @@ def list_course(ucinetid):
             print(','.join(map(str, row)))
         return True
     except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+def activeStudent(machineid, n, start, end):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # Check if the student exists
+        cursor.execute("SELECT machine_id FROM Machine WHERE machine_id = %s", (machineid,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No machine found with machineid {machineid}")
+            return False
+
+        select_query = """
+        SELECT DISTINCT s.UCINetID, u.name_first, u.name_middle, u.name_last
+        FROM StudentUseMachineInProject AS s, User AS u
+        WHERE s.machine_id = %s AND s.start_date >= %s AND s.end_date <= %s AND s.UCINetID = u.UCINetID
+        GROUP BY s.UCINetID
+        HAVING COUNT(*) > %s -- N
+        ORDER BY s.UCINetID ASC;
+        """
+        cursor.execute(select_query, (machineid, start, end, n))
+        rows = cursor.fetchall()
+        for row in rows:
+            print(','.join(map(str, row)))
+        return True
+    except Error as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+def machineUsage(courseid):
+    conn = create_connection()
+    try:
+        cursor = conn.cursor()
+        # Check if the student exists
+        cursor.execute("SELECT course_id FROM Course WHERE course_id = %s", (courseid,))
+        result = cursor.fetchone()
+
+        if result is None:
+            print(f"Error: No course found with courseid {courseid}")
+            return False
+
+        select_query = """
+        SELECT m.machine_id, m.hostname, m.IP_address, IFNULL(COUNT(st.machine_id), 0) AS counter
+        FROM Machine AS m
+        JOIN StudentUseMachineInProject st ON st.machine_id = m.machine_id
+        JOIN Project p ON p.project_id = st.project_id
+        WHERE p.course_id = %s
+        GROUP BY m.machine_id
+        ORDER BY m.machine_id DESC;
+        """
+        cursor.execute(select_query, (str(courseid),))
+        rows = cursor.fetchall()
+        for row in rows:
+            print(','.join(map(str, row)))
+        return True
+    except Error as e:
+        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -339,9 +415,19 @@ def main():
     elif sys.argv[1] == "listCourse" and len(sys.argv) == 3:
         result = list_course(sys.argv[2])
         print("Success" if result else "Fail")
-    else:
-        print("Invalid arguments")
 
+    # 11 Active students
+    elif sys.argv[1] == 'activeStudent' and len(sys.argv) == 6:
+        result = activeStudent(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+        print("Success" if result else "Fail")
+
+    # 12 Machine usage
+    elif sys.argv[1] == 'machineUsage' and len(sys.argv) == 3:
+        result = machineUsage(sys.argv[2])
+        print("Success" if result else "Fail")
+
+    else:
+        print("Invalid argument")
 
 
 
