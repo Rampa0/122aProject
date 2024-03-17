@@ -362,8 +362,8 @@ def adminEmails(machine_id):
         """
         cursor.execute(select_query, (machine_id,))
         rows = cursor.fetchall()
-        for row in rows:
-            print(','.join(map(str, row)))
+        emails = ';'.join(row[0] for row in rows)
+        print(emails)
         return True
     except Error as e:
         print(f"Error: {e}")
@@ -460,7 +460,9 @@ def main():
         result = add_email_to_user(sys.argv[2], sys.argv[3])
         print("Success" if result else "Fail")
 
-    # 4 DELETE STUDENT          THIS ALSO DELETES USER REFERENCES IN USEREMAIL - SHOULD IT?
+    # 4 DELETE STUDENT
+    # THIS ALSO DELETES USER REFERENCES IN USEREMAIL - SHOULD IT?
+    # - I think it's okay since USEREMAIL can't do a foreign key reference to a user that doesn't exist
     elif len(sys.argv) == 3 and sys.argv[1] == "deleteStudent":
         result = delete_student(sys.argv[2])
         print("Success" if result else "Fail")
@@ -471,6 +473,7 @@ def main():
         print("Success" if result else "Fail")
 
     # 6 Insert use record
+    # Does not work
     elif sys.argv[1] == "insertUse" and len(sys.argv) == 7:
         result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
