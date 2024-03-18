@@ -231,7 +231,7 @@ def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
             return False
 
         # Check if the machine exists
-        cursor.execute("SELECT machine_id FROM Machines WHERE machine_id = %s", (machine_id,))
+        cursor.execute("SELECT machine_id FROM Machine WHERE machine_id = %s", (machine_id,))
         result = cursor.fetchone()
 
         if result is None:
@@ -473,7 +473,6 @@ def main():
         print("Success" if result else "Fail")
 
     # 6 Insert use record
-    # Does not work
     elif sys.argv[1] == "insertUse" and len(sys.argv) == 7:
         result = insert_use_record(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6])
         print("Success" if result else "Fail")
