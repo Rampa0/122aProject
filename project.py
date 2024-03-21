@@ -393,6 +393,10 @@ def activeStudent(machineid, n, start, end):
     if conn is None:
         return False
     try:
+        start_date = datetime.strptime(start, '%Y-%m-%d')
+        end_date = datetime.strptime(end, '%Y-%m-%d')
+        if end_date < start_date:
+            return False
         cursor = conn.cursor()
         cursor.execute("SELECT machine_id FROM Machine WHERE machine_id = %s", (machineid,))
         result = cursor.fetchone()
@@ -537,7 +541,7 @@ def main():
         machineUsage(sys.argv[2])
 
     else:
-        print("Invalid argument")
+        pass
 
 
 
