@@ -385,12 +385,27 @@ def activeStudent(machineid, n, start, end):
             return False
 
         select_query = """
-        SELECT DISTINCT s.UCINetID, u.name_first, u.name_middle, u.name_last
-        FROM StudentUseMachineInProject AS s, User AS u
-        WHERE s.machine_id = %s AND s.start_date >= %s AND s.end_date <= %s AND s.UCINetID = u.UCINetID
-        GROUP BY s.UCINetID
-        HAVING COUNT(*) > %s -- N
-        ORDER BY s.UCINetID ASC;
+        SELECT 
+            s.UCINetID, 
+            u.name_first, 
+            u.name_middle, 
+            u.name_last
+        FROM 
+            StudentUseMachineInProject AS sump
+        JOIN 
+            Student s ON sump.UCINetID = s.UCINetID
+        JOIN 
+            User u ON s.UCINetID = u.UCINetID
+        WHERE 
+            sump.machine_id = %s AND 
+            sump.start_date >= %s AND 
+            sump.end_date <= %s
+        GROUP BY 
+            s.UCINetID, u.name_first, u.name_middle, u.name_last
+        HAVING 
+            COUNT(*) >= %s
+        ORDER BY 
+            s.UCINetID ASC;
         """
         cursor.execute(select_query, (machineid, start, end, n))
         rows = cursor.fetchall()
@@ -418,23 +433,22 @@ def machineUsage(courseid):
 
         select_query = """
         SELECT 
-            Machine.machine_id, 
-            Machine.hostname, 
-            Machine.IP_address, 
-            IFNULL(COUNT(StudentUseMachineInProject.UCINetID), 0) AS count
+            m.machine_id, 
+            m.hostname, 
+            m.IP_address, 
+            IFNULL(COUNT(sump.UCINetID), 0) AS count
         FROM 
-            Machine 
+            Machine m
         LEFT JOIN 
-            StudentUseMachineInProject ON Machine.machine_id = StudentUseMachineInProject.machine_id
+            StudentUseMachineInProject sump ON m.machine_id = sump.machine_id
         LEFT JOIN 
-            Project ON StudentUseMachineInProject.project_id = Project.project_id
+            Project p ON sump.project_id = p.project_id
         WHERE 
-            Project.course_id = %s
+            p.course_id = %s OR p.course_id IS NULL
         GROUP BY 
-            Machine.machine_id, Machine.hostname, Machine.IP_address
+            m.machine_id, m.hostname, m.IP_address
         ORDER BY 
-            Machine.machine_id DESC;
-
+            m.machine_id DESC;
         """
         cursor.execute(select_query, (str(courseid),))
         rows = cursor.fetchall()
