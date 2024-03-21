@@ -352,17 +352,19 @@ def adminEmails(machine_id):
             return False
 
         select_query = """
-        SELECT e.email
+        SELECT a.UCINetID, u.name_first, u.name_middle, u.name_last, GROUP_CONCAT(e.email SEPARATOR ';')
         FROM Administrator AS a
+        JOIN User u ON a.UCINetId = u.UCINetId
         JOIN UserEmail e ON a.UCINetId = e.UCINetId
         JOIN AdministratorManageMachine amm ON amm.UCINetId = a.UCINetId
         WHERE amm.machine_id = %s
+        GROUP BY a.UCINetID
         ORDER BY a.UCINetID ASC;
         """
         cursor.execute(select_query, (machine_id,))
         rows = cursor.fetchall()
-        emails = ';'.join(row[0] for row in rows)
-        return True
+        for row in rows:
+            print(','.join(map(str, row)))
     except Error as e:
         return False
     finally:
@@ -376,7 +378,6 @@ def activeStudent(machineid, n, start, end):
         return False
     try:
         cursor = conn.cursor()
-        # Check if the student exists
         cursor.execute("SELECT machine_id FROM Machine WHERE machine_id = %s", (machineid,))
         result = cursor.fetchone()
 
@@ -395,9 +396,7 @@ def activeStudent(machineid, n, start, end):
         rows = cursor.fetchall()
         for row in rows:
             print(','.join(map(str, row)))
-        return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -488,13 +487,11 @@ def main():
 
     # 10 Email of admins
     elif sys.argv[1] == 'adminEmails' and len(sys.argv) == 3:
-        result = adminEmails(sys.argv[2])
-        print("Success" if result else "Fail")
+        adminEmails(sys.argv[2])
 
     # 11 Active students
     elif sys.argv[1] == 'activeStudent' and len(sys.argv) == 6:
-        result = activeStudent(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
-        print("Success" if result else "Fail")
+        activeStudent(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
 
     # 12 Machine usage
     elif sys.argv[1] == 'machineUsage' and len(sys.argv) == 3:
