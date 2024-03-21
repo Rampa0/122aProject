@@ -417,13 +417,24 @@ def machineUsage(courseid):
             return False
 
         select_query = """
-        SELECT m.machine_id, m.hostname, m.IP_address, IFNULL(COUNT(st.machine_id), 0) AS counter
-        FROM Machine AS m
-        JOIN StudentUseMachineInProject st ON st.machine_id = m.machine_id
-        JOIN Project p ON p.project_id = st.project_id
-        WHERE p.course_id = %s
-        GROUP BY m.machine_id
-        ORDER BY m.machine_id DESC;
+        SELECT 
+            Machine.machine_id, 
+            Machine.hostname, 
+            Machine.IP_address, 
+            IFNULL(COUNT(StudentUseMachineInProject.UCINetID), 0) AS count
+        FROM 
+            Machine 
+        LEFT JOIN 
+            StudentUseMachineInProject ON Machine.machine_id = StudentUseMachineInProject.machine_id
+        LEFT JOIN 
+            Project ON StudentUseMachineInProject.project_id = Project.project_id
+        WHERE 
+            Project.course_id = %s
+        GROUP BY 
+            Machine.machine_id, Machine.hostname, Machine.IP_address
+        ORDER BY 
+            Machine.machine_id DESC;
+
         """
         cursor.execute(select_query, (str(courseid),))
         rows = cursor.fetchall()
