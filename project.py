@@ -4,21 +4,24 @@ import csv
 import os
 import mysql.connector
 from mysql.connector import Error
-from constants import Constants
+
 from datetime import datetime
 
 
 def create_connection():
     conn = None
     try:
+        from constants import Constants
         conn = mysql.connector.connect(
             host=Constants.HOSTNAME,
             user=Constants.USERNAME,
             password=Constants.PASSWORD,
             database=Constants.DATABASE
         )
+    except ModuleNotFoundError:
+        conn = mysql.connector.connect(user='test', password='password', database='cs122a')
     except Error as e:
-        print(f"Error: {e}")
+        return None
     return conn
 
 
@@ -40,15 +43,12 @@ def delete_and_create_tables(conn):
     ]
     for table in table_list:
         cursor.execute(f"DROP TABLE IF EXISTS {table};")
-        print(f'dropping table {table}')
-    print('-----')
     # Assuming 'schema.sql' is in the same directory as 'project.py' --later on we might need to rearange all of the fils into different directory
     with open('schema.sql', 'r') as file:
         sql_script = file.read()
     for statement in sql_script.split(';'):
         if statement.strip():
             cursor.execute(statement)
-            print(f'adding {statement}')
 
     cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
     conn.commit()
@@ -69,8 +69,7 @@ def detect_and_format_date(value):
 def import_csv_data(folder_name):
     conn = create_connection()
     if not conn:
-        print("Failed to connect to the database.")
-        return
+        return False
 
     delete_and_create_tables(conn)
     cursor = conn.cursor()
@@ -100,13 +99,20 @@ def import_csv_data(folder_name):
                 try:
                     cursor.execute(query, tuple(row))
                 except mysql.connector.Error as err:
-                    print(f"Error inserting data: {err}")
-                    print(f"Query: {query}")
-                    print(f"Row: {row}")
+                    return False
+    table_names = ["User", "Machine", "Course"]
+    row_counts = []
+    for table_name in table_names:
+        cursor.execute(f"SELECT COUNT(*) FROM {table_name};")
+        row_count = cursor.fetchone()[0]
+        row_counts.append(str(row_count))
+
+    print(",".join(row_counts))
 
     conn.commit()
     cursor.close()
     conn.close()
+    return True
 
 
 def insert_student(ucid, email, first, middle, last):
@@ -134,7 +140,6 @@ def insert_student(ucid, email, first, middle, last):
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -144,7 +149,6 @@ def insert_student(ucid, email, first, middle, last):
 def add_email_to_user(ucid, email):
     conn = create_connection()
     if conn is None:
-        print("Failed to connect to the database.")
         return False
 
     try:
@@ -152,7 +156,6 @@ def add_email_to_user(ucid, email):
 
         cursor.execute("SELECT COUNT(*) FROM User WHERE UCINetID = %s", (ucid,))
         if cursor.fetchone()[0] == 0:
-            print(f"No user found with UCINetID: {ucid}")
             return False
 
         insert_query = "INSERT INTO UserEmail (UCINetID, Email) VALUES (%s, %s)"
@@ -160,7 +163,6 @@ def add_email_to_user(ucid, email):
         conn.commit()
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -170,7 +172,6 @@ def add_email_to_user(ucid, email):
 def delete_student(ucid):
     conn = create_connection()
     if conn is None:
-        print("Failed to connect to the database.")
         return False
 
     try:
@@ -181,7 +182,6 @@ def delete_student(ucid):
         conn.commit()
         return rows_affected > 0
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -349,7 +349,6 @@ def adminEmails(machine_id):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No machine found with machine_id {machine_id}")
             return False
 
         select_query = """
@@ -363,10 +362,8 @@ def adminEmails(machine_id):
         cursor.execute(select_query, (machine_id,))
         rows = cursor.fetchall()
         emails = ';'.join(row[0] for row in rows)
-        print(emails)
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
@@ -384,7 +381,6 @@ def activeStudent(machineid, n, start, end):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No machine found with machineid {machineid}")
             return False
 
         select_query = """
@@ -419,7 +415,6 @@ def machineUsage(courseid):
         result = cursor.fetchone()
 
         if result is None:
-            print(f"Error: No course found with courseid {courseid}")
             return False
 
         select_query = """
@@ -437,7 +432,6 @@ def machineUsage(courseid):
             print(','.join(map(str, row)))
         return True
     except Error as e:
-        print(f"Error: {e}")
         return False
     finally:
         if conn:
