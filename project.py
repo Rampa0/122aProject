@@ -4,8 +4,13 @@ import csv
 import os
 import mysql.connector
 from mysql.connector import Error
-
+import re
 from datetime import datetime
+
+
+def is_valid_email(email):
+    email_regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    return re.match(email_regex, email) is not None
 
 
 def create_connection():
@@ -88,18 +93,21 @@ def import_csv_data(folder_name):
 
     for file_name, table_name in files_to_table:
         file_path = os.path.join(folder_name, file_name + ".csv")
-        with open(file_path, mode='r') as file:
-            csv_reader = csv.reader(file)
-            for row in csv_reader:
-                if table_name in ["StudentUseMachineInProject"]:
-                    row = [detect_and_format_date(value) for value in row]
+        try:
+            with open(file_path, mode='r') as file:
+                csv_reader = csv.reader(file)
+                for row in csv_reader:
+                    if table_name in ["StudentUseMachineInProject"]:
+                        row = [detect_and_format_date(value) for value in row]
 
-                placeholders = ', '.join(['%s'] * len(row))
-                query = f"INSERT INTO {table_name} VALUES ({placeholders});"
-                try:
-                    cursor.execute(query, tuple(row))
-                except mysql.connector.Error as err:
-                    return False
+                    placeholders = ', '.join(['%s'] * len(row))
+                    query = f"INSERT INTO {table_name} VALUES ({placeholders});"
+                    try:
+                        cursor.execute(query, tuple(row))
+                    except mysql.connector.Error as err:
+                        return False
+        except:
+            return False
     table_names = ["User", "Machine", "Course"]
     row_counts = []
     for table_name in table_names:
@@ -116,6 +124,8 @@ def import_csv_data(folder_name):
 
 
 def insert_student(ucid, email, first, middle, last):
+    if not is_valid_email(email):
+        return False
     conn = create_connection()
     if conn is None:
         return False
@@ -147,6 +157,8 @@ def insert_student(ucid, email, first, middle, last):
 
 
 def add_email_to_user(ucid, email):
+    if not is_valid_email(email):
+        return False
     conn = create_connection()
     if conn is None:
         return False
@@ -210,12 +222,16 @@ def insert_machine(machine_id, hostname, ip_addr, status, location):
 
 
 def insert_use_record(proj_id, ucinetid, machine_id, start_date, end_date):
+
     conn = create_connection()
     if conn is None:
         return False
     try:
         cursor = conn.cursor()
-
+        start_date = datetime.strptime(start_date, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date, '%Y-%m-%d')
+        if end_date < start_date:
+            return False
         # Check if the student exists
         cursor.execute("SELECT UCINetID FROM Student WHERE UCINetID = %s", (ucinetid,))
         result = cursor.fetchone()
