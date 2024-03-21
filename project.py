@@ -440,11 +440,10 @@ def machineUsage(courseid):
         FROM 
             Machine m
         LEFT JOIN 
-            StudentUseMachineInProject sump ON m.machine_id = sump.machine_id
-        LEFT JOIN 
-            Project p ON sump.project_id = p.project_id
-        WHERE 
-            p.course_id = %s OR p.course_id IS NULL
+            (SELECT sump.UCINetID, sump.machine_id FROM StudentUseMachineInProject sump 
+            JOIN Project p ON sump.project_id = p.project_id 
+            WHERE p.course_id = %s) AS sump 
+        ON m.machine_id = sump.machine_id
         GROUP BY 
             m.machine_id, m.hostname, m.IP_address
         ORDER BY 
@@ -456,6 +455,7 @@ def machineUsage(courseid):
             print(','.join(map(str, row)))
         return True
     except Error as e:
+        print(e)
         return False
     finally:
         if conn:
