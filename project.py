@@ -317,7 +317,7 @@ def list_popular_course(n):
         cursor = conn.cursor()
 
         select_query = """
-        SELECT Course.course_id, Course.title, COUNT(Student.UCINetID) AS studentCount
+        SELECT Course.course_id, Course.title, COUNT(DISTINCT Student.UCINetID) AS studentCount
         FROM Course
         JOIN Project ON Course.course_id = Project.course_id
         JOIN StudentUseMachineInProject ON Project.project_id = StudentUseMachineInProject.project_id
