@@ -290,7 +290,7 @@ def list_course_attended(ucinetid):
             return False
 
         select_query = """
-        SELECT Course.course_id, Course.title, Course.quarter
+        SELECT DISTINCT Course.course_id, Course.title, Course.quarter
         FROM Course
         JOIN Project ON Course.course_id = Project.course_id
         JOIN StudentUseMachineInProject ON Project.project_id = StudentUseMachineInProject.project_id
@@ -477,13 +477,11 @@ def main():
 
     # 8 Course attended
     elif sys.argv[1] == "listCourse" and len(sys.argv) == 3:
-        result = list_course_attended(sys.argv[2])
-        print("Success" if result else "Fail")
+        list_course_attended(sys.argv[2])
 
     # 9 Popular course
     elif sys.argv[1] == 'popularCourse' and len(sys.argv) == 3:
-        result = list_popular_course(int(sys.argv[2]))
-        print("Success" if result else "Fail")
+        list_popular_course(int(sys.argv[2]))
 
     # 10 Email of admins
     elif sys.argv[1] == 'adminEmails' and len(sys.argv) == 3:
@@ -495,8 +493,7 @@ def main():
 
     # 12 Machine usage
     elif sys.argv[1] == 'machineUsage' and len(sys.argv) == 3:
-        result = machineUsage(sys.argv[2])
-        print("Success" if result else "Fail")
+        machineUsage(sys.argv[2])
 
     else:
         print("Invalid argument")
